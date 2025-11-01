@@ -4,19 +4,27 @@ import com.dktalis.exercise.atm.model.User;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class UserManager {
 
-    public Map<String, User> user = new HashMap<>();
+    private Map<String, User> userByUsername = new HashMap<>();
+    private Map<String, User> userByUserId = new HashMap<>();
 
-    public User getUser(String username) {
-        return user.get(username);
+    public User getUserByUserName(String username) {
+        return userByUsername.get(username);
+    }
+
+    public User getUserByUserId(String userId) {
+        return userByUserId.get(userId);
     }
 
     public User adduser(String username) {
         User userEntity = new User();
-        userEntity.setUsername(username);
-        user.put(username, userEntity);
+        userEntity.setId(UUID.randomUUID().toString());
+        userEntity.setName(username);
+        userByUsername.put(username, userEntity);
+        userByUserId.put(userEntity.getId(), userEntity);
         return userEntity;
     }
 
