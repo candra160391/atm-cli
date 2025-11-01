@@ -14,7 +14,7 @@ public class InMemoryUserRepoImpl implements UserRepository {
 
     @Override
     public User findByUserName(String username) {
-        return userManager.getUser(username);
+        return userManager.getUserByUserName(username);
     }
 
     @Override
