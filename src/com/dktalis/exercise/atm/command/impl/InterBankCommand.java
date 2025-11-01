@@ -5,7 +5,7 @@ import com.dktalis.exercise.atm.command.MenuCommand;
 public class InterBankCommand implements MenuCommand {
 
     @Override
-    public void execute() {
+    public void execute(String commandArgs) {
         throw new UnsupportedOperationException("not implemented yet.");
     }
 }
