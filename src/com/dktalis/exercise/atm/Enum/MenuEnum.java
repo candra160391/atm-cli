@@ -4,6 +4,7 @@ public enum MenuEnum {
     LOGIN("login"),
     TRANSFER("transfer"),
     WITHDRAW("withdraw"),
+    BALANCE("balance"),
     DEPOSIT("deposit"),
     LOGOUT("logout");
 

@@ -23,7 +23,7 @@ public class IntrabankServiceImpl implements IntrabankService {
             throw new Exception("please login first");
         }
 
-        if(amount.compareTo(BigDecimal.ZERO) < 0) {
+        if(amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new Exception("invalid deposit amount");
         }
 
@@ -37,7 +37,38 @@ public class IntrabankServiceImpl implements IntrabankService {
     }
 
     @Override
-    public void withdraw() {
+    public void withdraw(BigDecimal amount) throws Exception {
+        if(!authenticationProvider.isAuthenticated()){
+            throw new Exception("please login first");
+        }
+
+        if(amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new Exception("invalid withdraw amount");
+        }
+
+        User currentUser = authenticationProvider.getAuthenticatedUser();
+        Account userAccount = accountRepository.findByUserId(currentUser.getId());
+        BigDecimal newBalance = userAccount.getBalance().subtract(amount);
+
+        if(newBalance.compareTo(BigDecimal.ZERO) < 0){
+            throw new Exception("insufficient balance.");
+        }
+
+        accountRepository.updateBalance(userAccount.getAccountId(), newBalance);
+
+        System.out.println("your balance is " + newBalance);
+    }
+
+    @Override
+    public void getCurrentBalance() throws Exception {
+        if(!authenticationProvider.isAuthenticated()){
+            throw new Exception("please login first");
+        }
+
+        User currentUser = authenticationProvider.getAuthenticatedUser();
+        Account userAccount = accountRepository.findByUserId(currentUser.getId());
+        BigDecimal currentBalance = userAccount.getBalance();
+        System.out.println("your balance is " + currentBalance);
     }
 
     @Override

@@ -18,8 +18,9 @@ public class MenuManager {
     ){
         menuCommand.put("login", new LoginCommand(authenticationProvider));
         menuCommand.put("deposit", new DepositCommand(intrabankService));
-        menuCommand.put("withdraw", new WithdrawCommand());
+        menuCommand.put("withdraw", new WithdrawCommand(intrabankService));
         menuCommand.put("transfer", new TransferCommand());
+        menuCommand.put("balance", new BalanceCommand(intrabankService));
         menuCommand.put("logout", new LogoutCommand(authenticationProvider));
     }
 

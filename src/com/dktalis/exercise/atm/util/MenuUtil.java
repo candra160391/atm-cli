@@ -32,6 +32,11 @@ public class MenuUtil{
                 throw new Exception("invalid withdraw command. Valid command is: withdraw [amount]");
             }
         }
+        else if(commands[0].equals(MenuEnum.BALANCE.getValue())){
+            if(commands.length > 1){
+                throw new Exception("invalid balance command. Valid command is: balance");
+            }
+        }
         else if(commands[0].equals(MenuEnum.LOGOUT.getValue())){
             if(commands.length > 1){
                 throw new Exception("invalid logout command. Valid command is: logout");
