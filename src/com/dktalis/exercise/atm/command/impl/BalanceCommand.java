@@ -3,20 +3,16 @@ package com.dktalis.exercise.atm.command.impl;
 import com.dktalis.exercise.atm.command.MenuCommand;
 import com.dktalis.exercise.atm.service.IntrabankService;
 
-import java.math.BigDecimal;
-
-public class WithdrawCommand implements MenuCommand {
+public class BalanceCommand implements MenuCommand {
 
     IntrabankService intrabankService;
 
-    public WithdrawCommand(IntrabankService intrabankService){
+    public BalanceCommand(IntrabankService intrabankService){
         this.intrabankService = intrabankService;
     }
 
     @Override
     public void execute(String commandArgs) throws Exception {
-        String [] commands = commandArgs.split(" ");
-        BigDecimal amount = new BigDecimal(commands[1]);
-        intrabankService.withdraw(amount);
+        intrabankService.getCurrentBalance();
     }
 }
