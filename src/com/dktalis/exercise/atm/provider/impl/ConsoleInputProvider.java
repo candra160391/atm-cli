@@ -11,4 +11,9 @@ public class ConsoleInputProvider implements InputProvider {
     public String readInput() {
         return in.nextLine();
     }
+
+    @Override
+    public void close() {
+        in.close();
+    }
 }

@@ -1,6 +1,8 @@
 package com.dktalis.exercise.atm.manager;
 
 import com.dktalis.exercise.atm.model.Account;
+import com.dktalis.exercise.atm.model.User;
+
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,17 +25,23 @@ public class AccountManager {
         Account account = getAccountByAccountId(accountId);
         account.setBalance(newBalance);
         accountByAccountId.put(accountId, account);
-        accountByUserId.put(account.getUserId(), account);
+        accountByUserId.put(account.getUser().getId(), account);
     }
 
-    public Account addAccount(String userId) {
+    public Account addAccount(User user) {
         Account accountEntity = new Account();
         accountEntity.setAccountId(UUID.randomUUID().toString());
-        accountEntity.setUserId(userId);
+        accountEntity.setUser(user);
         accountEntity.setBalance(BigDecimal.ZERO);
-        accountByUserId.put(userId, accountEntity);
+        accountByUserId.put(user.getId(), accountEntity);
         accountByAccountId.put(accountEntity.getAccountId(), accountEntity);
         return accountEntity;
     }
 
+    public void upsertDebtAccount(Account sourceAccount, Account targetAccount) {
+        accountByUserId.put(sourceAccount.getUser().getId(), sourceAccount);
+        accountByAccountId.put(sourceAccount.getAccountId(), sourceAccount);
+        accountByUserId.put(targetAccount.getUser().getId(), targetAccount);
+        accountByAccountId.put(targetAccount.getAccountId(), targetAccount);
+    }
 }

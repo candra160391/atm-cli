@@ -1,11 +1,15 @@
 package com.dktalis.exercise.atm.model;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Account {
     private String accountId;
-    private String userId;
+    private User user;
     private BigDecimal balance;
+    private Map<String, Account> fromDebtAccount = new HashMap<>();
+    private Map<String, Account> toDebtAccount = new HashMap<>();
 
     public String getAccountId() {
         return accountId;
@@ -15,12 +19,12 @@ public class Account {
         this.accountId = accountId;
     }
 
-    public String getUserId() {
-        return userId;
+    public User getUser() {
+        return user;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public BigDecimal getBalance() {
@@ -29,5 +33,21 @@ public class Account {
 
     public void setBalance(BigDecimal balance) {
         this.balance = balance;
+    }
+
+    public Map<String, Account> getFromDebtAccount() {
+        return fromDebtAccount;
+    }
+
+    public void setFromDebtAccount(Map<String, Account> fromDebtAccount) {
+        this.fromDebtAccount = fromDebtAccount;
+    }
+
+    public Map<String, Account> getToDebtAccount() {
+        return toDebtAccount;
+    }
+
+    public void setToDebtAccount(Map<String, Account> toDebtAccount) {
+        this.toDebtAccount = toDebtAccount;
     }
 }

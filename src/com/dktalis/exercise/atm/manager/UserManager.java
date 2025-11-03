@@ -19,13 +19,9 @@ public class UserManager {
         return userByUserId.get(userId);
     }
 
-    public User adduser(String username) {
-        User userEntity = new User();
-        userEntity.setId(UUID.randomUUID().toString());
-        userEntity.setName(username);
-        userByUsername.put(username, userEntity);
-        userByUserId.put(userEntity.getId(), userEntity);
-        return userEntity;
+    public User adduser(User user) {
+        userByUsername.put(user.getName(), user);
+        userByUserId.put(user.getId(), user);
+        return user;
     }
-
 }
