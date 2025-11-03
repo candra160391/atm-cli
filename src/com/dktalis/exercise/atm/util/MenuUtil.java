@@ -42,6 +42,11 @@ public class MenuUtil{
                 throw new Exception("invalid logout command. Valid command is: logout");
             }
         }
+        else if(commands[0].equals(MenuEnum.EXIT.getValue())){
+            if(commands.length > 1){
+                throw new Exception("invalid exit command. Valid command is: exit");
+            }
+        }
         else {
             throw new Exception("Unknown command");
         }

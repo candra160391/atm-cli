@@ -6,7 +6,8 @@ public enum MenuEnum {
     WITHDRAW("withdraw"),
     BALANCE("balance"),
     DEPOSIT("deposit"),
-    LOGOUT("logout");
+    LOGOUT("logout"),
+    EXIT("exit");
 
     final String value;
 

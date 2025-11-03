@@ -5,23 +5,31 @@ import com.dktalis.exercise.atm.model.User;
 import com.dktalis.exercise.atm.provider.AuthenticationProvider;
 import com.dktalis.exercise.atm.repository.AccountRepository;
 import com.dktalis.exercise.atm.repository.UserRepository;
+import com.dktalis.exercise.atm.service.AccountService;
+import com.dktalis.exercise.atm.service.UserService;
 
 public class UsernameAuthProvider implements AuthenticationProvider {
 
     public UserRepository userRepository;
     public AccountRepository accountRepository;
     public SessionManager sessionManager;
+    public UserService userService;
+    public AccountService accountService;
 
     public UsernameAuthProvider
     (
         SessionManager sessionManager,
         UserRepository userRepository,
-        AccountRepository accountRepository
+        AccountRepository accountRepository,
+        UserService userService,
+        AccountService accountService
     )
     {
         this.sessionManager = sessionManager;
         this.userRepository = userRepository;
         this.accountRepository = accountRepository;
+        this.userService = userService;
+        this.accountService = accountService;
     }
 
     public boolean isAuthenticated(){
@@ -34,13 +42,14 @@ public class UsernameAuthProvider implements AuthenticationProvider {
 
     @Override
     public void login(String username) {
-         User user = userRepository.findByUserName(username);
-         if(user == null){
-            user = userRepository.addUser(username);
-            accountRepository.addAccount(user.getId());
-         }
-         sessionManager.createSession(user);
 
+        User user = userRepository.findByUserName(username);
+        if(user == null){
+            user = userService.addUser(username);
+            accountService.addAccount(user);
+        }
+
+        sessionManager.createSession(user);
         System.out.println("Hi " + getAuthenticatedUser().getName());
     }
 
@@ -49,6 +58,5 @@ public class UsernameAuthProvider implements AuthenticationProvider {
         User currentUser = getAuthenticatedUser();
         sessionManager.clearSession();
         System.out.println("Goodbye " + currentUser.getName());
-
     }
 }

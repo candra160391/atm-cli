@@ -18,4 +18,8 @@ public class MockInputProvider implements InputProvider {
     public String readInput() {
         return inputMap.poll();
     }
+
+    @Override
+    public void close() {
+    }
 }
