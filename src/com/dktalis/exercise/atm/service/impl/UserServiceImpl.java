@@ -9,7 +9,7 @@ import java.util.UUID;
 
 public class UserServiceImpl implements UserService {
 
-    public UserRepository userRepository;
+    private final UserRepository userRepository;
     public UserServiceImpl(UserRepository userRepository){
         this.userRepository = userRepository;
     }
