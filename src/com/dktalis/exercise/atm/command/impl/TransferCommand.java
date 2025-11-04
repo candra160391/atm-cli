@@ -1,16 +1,16 @@
 package com.dktalis.exercise.atm.command.impl;
 
 import com.dktalis.exercise.atm.command.MenuCommand;
-import com.dktalis.exercise.atm.service.IntrabankService;
+import com.dktalis.exercise.atm.service.TransactionService;
 
 import java.math.BigDecimal;
 
 public class TransferCommand implements MenuCommand {
 
-    IntrabankService intrabankService;
+    TransactionService transactionService;
 
-    public TransferCommand(IntrabankService intrabankService){
-        this.intrabankService = intrabankService;
+    public TransferCommand(TransactionService transactionService){
+        this.transactionService = transactionService;
     }
 
     @Override
@@ -18,6 +18,6 @@ public class TransferCommand implements MenuCommand {
         String [] commands = commandArgs.split(" ");
         String targetUser = commands[1];
         BigDecimal transferAmount = new BigDecimal(commands[2]);
-        intrabankService.transfer(targetUser, transferAmount);
+        transactionService.transfer(targetUser, transferAmount);
     }
 }

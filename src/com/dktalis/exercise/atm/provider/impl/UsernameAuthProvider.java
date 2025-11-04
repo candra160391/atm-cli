@@ -1,6 +1,8 @@
 package com.dktalis.exercise.atm.provider.impl;
 
+import com.dktalis.exercise.atm.exception.SessionLoginException;
 import com.dktalis.exercise.atm.manager.SessionManager;
+import com.dktalis.exercise.atm.model.Account;
 import com.dktalis.exercise.atm.model.User;
 import com.dktalis.exercise.atm.provider.AuthenticationProvider;
 import com.dktalis.exercise.atm.repository.AccountRepository;
@@ -41,22 +43,55 @@ public class UsernameAuthProvider implements AuthenticationProvider {
     }
 
     @Override
-    public void login(String username) {
+    public void login(String username) throws SessionLoginException {
 
-        User user = userRepository.findByUserName(username);
-        if(user == null){
-            user = userService.addUser(username);
-            accountService.addAccount(user);
+        if(isAuthenticated() && !getAuthenticatedUser().getName().equals(username)){
+            throw new SessionLoginException("Please logout first");
         }
 
-        sessionManager.createSession(user);
-        System.out.println("Hi " + getAuthenticatedUser().getName());
+        else if(isAuthenticated()){
+            throw new SessionLoginException("Already logged in");
+        }
+        else {
+            User user = userRepository.findByUserName(username);
+            Account account ;
+            if(user == null){
+                user = userService.addUser(username);
+                account = accountService.addAccount(user);
+            }
+            else {
+                account = accountRepository.findByUserId(user.getId());
+            }
+
+            sessionManager.createSession(user);
+            displayWelcome(account);
+        }
+
+    }
+
+    private void displayWelcome(Account userAccount) {
+        System.out.println("Hi " + userAccount.getUser().getName());
+        System.out.println("Your balance is $" + userAccount.getBalance());
+
+        Account debtAccount = userAccount.getDebtAccount();
+        if(debtAccount != null)
+            System.out.println("Owed $" + debtAccount.getBalance() + " to " + debtAccount.getUser().getName());
+
+        Account receivableAccount = userAccount.getReceivableAccount();
+        if(receivableAccount != null)
+            System.out.println("Owed $" + receivableAccount.getBalance() + " from " + receivableAccount.getUser().getName());
+
     }
 
     @Override
-    public void logout() {
-        User currentUser = getAuthenticatedUser();
-        sessionManager.clearSession();
-        System.out.println("Goodbye " + currentUser.getName());
+    public void logout() throws SessionLoginException {
+        if(!isAuthenticated()){
+            throw new SessionLoginException("already logged out");
+        }
+        else {
+            User currentUser = getAuthenticatedUser();
+            sessionManager.clearSession();
+            System.out.println("Goodbye " + currentUser.getName());
+        }
     }
 }

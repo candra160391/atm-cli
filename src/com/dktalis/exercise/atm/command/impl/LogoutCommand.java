@@ -1,6 +1,7 @@
 package com.dktalis.exercise.atm.command.impl;
 
 import com.dktalis.exercise.atm.command.MenuCommand;
+import com.dktalis.exercise.atm.exception.SessionLoginException;
 import com.dktalis.exercise.atm.provider.AuthenticationProvider;
 
 public class LogoutCommand implements MenuCommand {
@@ -13,7 +14,7 @@ public class LogoutCommand implements MenuCommand {
     }
 
     @Override
-    public void execute(String commandArgs) {
+    public void execute(String commandArgs) throws SessionLoginException {
         authenticationProvider.logout();
     }
 }

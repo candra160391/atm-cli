@@ -3,11 +3,8 @@ package com.dktalis.exercise.atm.repository;
 import com.dktalis.exercise.atm.model.Account;
 import com.dktalis.exercise.atm.model.User;
 
-import java.math.BigDecimal;
-
 public interface AccountRepository {
     public Account findByUserId(String userId);
-    public Account addAccount(User user);
-    public void updateBalance(String accountId, BigDecimal newBalance);
-    public void upsertDebtAccount(Account sourceAccount, Account targetAccount);
+    public Account createNewAccount(User user);
+    public Account updateAccount(Account account);
 }

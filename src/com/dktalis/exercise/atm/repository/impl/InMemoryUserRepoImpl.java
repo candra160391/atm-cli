@@ -6,7 +6,7 @@ import com.dktalis.exercise.atm.repository.UserRepository;
 
 public class InMemoryUserRepoImpl implements UserRepository {
 
-    UserManager userManager;
+    private final UserManager userManager;
 
     public InMemoryUserRepoImpl(UserManager userManager){
         this.userManager = userManager;
