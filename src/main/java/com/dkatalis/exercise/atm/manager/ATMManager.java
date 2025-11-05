@@ -56,11 +56,11 @@ public class ATMManager {
         this.menuManager = new MenuManager(authenticationProvider, messageProvider, transactionService, inputProvider);
     }
 
-    public void run(){
+    public void runInteractive(){
         while(true){
             try {
                 displayPrompt();
-                String userInput = inputProvider.readInput();
+                String userInput = inputProvider.readInput().trim();
                 String [] commandArgs = userInput.trim().split("\\s+");
                 MenuUtil.validateUserInput(commandArgs, authenticationProvider, messageProvider);
                 MenuCommand menuCommand = menuManager.getMenu(commandArgs[0]);
@@ -71,6 +71,27 @@ public class ATMManager {
                 errorProvider.handle(e);
             }
         }
+    }
+    public void runOnce(String command){
+        try {
+            displayPrompt();
+            String [] commandArgs = command.trim().split("\\s+");
+            MenuUtil.validateUserInput(commandArgs, authenticationProvider, messageProvider);
+            MenuCommand menuCommand = menuManager.getMenu(commandArgs[0]);
+            menuCommand.execute(command);
+            System.out.println();
+        }
+        catch (Exception e){
+            errorProvider.handle(e);
+        }
+    }
+
+    public AuthenticationProvider getAuthenticationProvider(){
+        return authenticationProvider;
+    }
+
+    public UserRepository getUserRepository(){
+        return userRepository;
     }
 
     private void displayPrompt() {

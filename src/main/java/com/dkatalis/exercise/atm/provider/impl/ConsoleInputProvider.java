@@ -13,6 +13,11 @@ public class ConsoleInputProvider implements InputProvider {
     }
 
     @Override
+    public boolean isOpen() {
+        return in.hasNextLine();
+    }
+
+    @Override
     public void close() {
         in.close();
     }

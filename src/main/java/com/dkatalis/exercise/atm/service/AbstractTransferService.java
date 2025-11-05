@@ -5,6 +5,7 @@ import com.dkatalis.exercise.atm.dto.TransferAdjusment;
 import com.dkatalis.exercise.atm.exception.SessionLoginException;
 import com.dkatalis.exercise.atm.exception.TransactionException;
 import com.dkatalis.exercise.atm.model.Account;
+import com.dkatalis.exercise.atm.provider.MessageProvider;
 
 import java.math.BigDecimal;
 
@@ -12,6 +13,7 @@ public abstract class AbstractTransferService {
 
     public abstract Account getSourceAccount();
     public abstract AccountService getAccountService();
+    public abstract MessageProvider getMessageProvider();
     public abstract Account getTargetAccount(String username);
     public abstract void validateTransfer(Account targetUser, Account transferAmount) throws SessionLoginException, TransactionException;
     public abstract TransferAdjusment doBeforeTransfer(Account sourceAccount, Account targetUser, BigDecimal transferAmount) throws SessionLoginException, TransactionException;
@@ -31,7 +33,7 @@ public abstract class AbstractTransferService {
             BigDecimal targetAccountBalance = targetAccount.getBalance();
             targetAccount.setBalance(targetAccountBalance.add(transferAdjusment.getTargetAmount()));
             targetAccount = getAccountService().updateAccount(targetAccount);
-            System.out.println("Transferred $" + transferAdjusment.getTargetAmount() + " to " + targetAccount.getUser().getName());
+            System.out.println(getMessageProvider().get("transfer.success", transferAdjusment.getTargetAmount(), targetAccount.getUser().getName()));
         }
 
         BigDecimal sourceAccountBalance = sourceAccount.getBalance();
@@ -45,7 +47,7 @@ public abstract class AbstractTransferService {
         }
 
         sourceAccount = getAccountService().updateAccount(sourceAccount);
-        System.out.println("Your balance is $" + sourceAccount.getBalance());
+        System.out.println(getMessageProvider().get("display.balance", sourceAccount.getBalance()));
     }
 
     private void doAfterTransfer(TransferAdjusment transferAdjusment, Account sourceAccount, Account targetAccount) {
@@ -53,6 +55,7 @@ public abstract class AbstractTransferService {
         if(transferAdjusment.hasReceivable()){
             updateReceivableAccount(sourceAccount, targetAccount, transferAdjusment);
             if(transferAdjusment.getDebtAmount().compareTo(BigDecimal.ZERO) > 0){
+                transferAdjusment.setDebtTransactionType(TransactionTypeEnum.CREDIT);
                 sourceAccount = updateDebtAccount(sourceAccount, targetAccount, transferAdjusment);
             }
         }
@@ -62,11 +65,11 @@ public abstract class AbstractTransferService {
         }
 
         if(sourceAccount.getDebtAccount() != null){
-            System.out.println("Owed $" + sourceAccount.getDebtAccount().getBalance() + " to " + sourceAccount.getDebtAccount().getUser().getName());
+            System.out.println(getMessageProvider().get("display.debt", sourceAccount.getDebtAccount().getBalance(), sourceAccount.getDebtAccount().getUser().getName()));
         }
 
         if(sourceAccount.getReceivableAccount() != null){
-            System.out.println("Owed $" + sourceAccount.getReceivableAccount().getBalance() + " from " + sourceAccount.getReceivableAccount().getUser().getName());
+            System.out.println(getMessageProvider().get("display.receive",sourceAccount.getReceivableAccount().getBalance(), sourceAccount.getReceivableAccount().getUser().getName()));
         }
     }
 
@@ -76,8 +79,8 @@ public abstract class AbstractTransferService {
     }
 
     public Account updateDebtAccount(Account sourceAccount, Account targetAccount, TransferAdjusment transferAdjusment){
-        getAccountService().upsertReceivableAccount(targetAccount, sourceAccount, transferAdjusment.getDebtAmount(), TransactionTypeEnum.CREDIT);
-        sourceAccount = getAccountService().upsertDebtAccount(sourceAccount, targetAccount, transferAdjusment.getDebtAmount(), TransactionTypeEnum.CREDIT);
+        getAccountService().upsertReceivableAccount(targetAccount, sourceAccount, transferAdjusment.getDebtAmount(), transferAdjusment.getDebtTransactionType());
+        sourceAccount = getAccountService().upsertDebtAccount(sourceAccount, targetAccount, transferAdjusment.getDebtAmount(), transferAdjusment.getDebtTransactionType());
 
         return sourceAccount;
     }

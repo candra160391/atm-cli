@@ -11,10 +11,9 @@ import com.dkatalis.exercise.atm.repository.AccountRepository;
 import com.dkatalis.exercise.atm.repository.UserRepository;
 import com.dkatalis.exercise.atm.service.AbstractTransferService;
 import com.dkatalis.exercise.atm.service.AccountService;
-
 import java.math.BigDecimal;
 
-public class ReceivableTransferServiceImpl extends AbstractTransferService {
+public class NormalTransferServiceImpl extends AbstractTransferService {
 
     private final AccountService accountService;
     private final AccountRepository accountRepository;
@@ -22,7 +21,7 @@ public class ReceivableTransferServiceImpl extends AbstractTransferService {
     private final AuthenticationProvider authenticationProvider;
     private final MessageProvider messageProvider;
 
-    public ReceivableTransferServiceImpl
+    public NormalTransferServiceImpl
     (
         AccountService accountService,
         AccountRepository accountRepository,
@@ -36,6 +35,11 @@ public class ReceivableTransferServiceImpl extends AbstractTransferService {
         this.userRepository = userRepository;
         this.authenticationProvider = authenticationProvider;
         this.messageProvider = messageProvider;
+    }
+
+    @Override
+    public MessageProvider getMessageProvider() {
+        return messageProvider;
     }
 
     @Override
@@ -60,9 +64,13 @@ public class ReceivableTransferServiceImpl extends AbstractTransferService {
 
     @Override
     public void validateTransfer(Account sourceAccount, Account targetAccount) throws TransactionException {
+        BigDecimal sourceAccountBalance = sourceAccount.getBalance();
 
-        if(sourceAccount.getReceivableAccount() == null){
+        if(sourceAccountBalance.compareTo(BigDecimal.ZERO) == 0){
+            throw new TransactionException(messageProvider.get("error.not.enough.balance"));
+        }
 
+        if(sourceAccount.getDebtAccount() != null || sourceAccount.getReceivableAccount() != null){
             throw new TransactionException(messageProvider.get("error.invalid.transfer.type"));
         }
 
@@ -72,50 +80,29 @@ public class ReceivableTransferServiceImpl extends AbstractTransferService {
     }
 
     @Override
-    public TransferAdjusment doBeforeTransfer(Account sourceAccount, Account targetAccount, BigDecimal transferAmount) throws TransactionException {
+    public TransferAdjusment doBeforeTransfer(Account sourceAccount, Account targetAccount, BigDecimal transferAmount) throws TransactionException{
 
         if(transferAmount.compareTo(BigDecimal.ZERO) <= 0){
             throw new TransactionException(messageProvider.get("error.invalid.transfer.amount"));
         }
 
-        BigDecimal receiveableAmount = sourceAccount.getReceivableAccount().getBalance();
-        BigDecimal residualValue = BigDecimal.ZERO;
+        BigDecimal debtAmount = BigDecimal.ZERO;
         BigDecimal sourceAccountBalance = sourceAccount.getBalance();
 
-        // scenario
-        // transfer < debt
-        // transfer == deb
-        // transfer > deb, debt is paid, residual = transfer - deb, then residual < balance , transfer amount = residual
-        // transfer > deb , debt is paid, residual = transfer - deb, then residual > balance, transfer amount = balance, debt = balance - residual
-
-        if(transferAmount.compareTo(receiveableAmount) <= 0){
-            return getTransferAdjusment(BigDecimal.ZERO, transferAmount, BigDecimal.ZERO);
+        if(sourceAccountBalance.compareTo(transferAmount) <= 0){
+            debtAmount = transferAmount.subtract(sourceAccountBalance);
+            transferAmount = sourceAccountBalance;
         }
 
-        residualValue = transferAmount.subtract(receiveableAmount);
-
-        if(residualValue.compareTo(sourceAccountBalance) < 0){
-            return getTransferAdjusment(BigDecimal.ZERO, receiveableAmount, residualValue);
-        }
-        else {
-            BigDecimal debtAmount = transferAmount.subtract(sourceAccountBalance).subtract(receiveableAmount);
-            return getTransferAdjusment(debtAmount, receiveableAmount, sourceAccountBalance);
-        }
+        TransferAdjusment transferAdjusment = new TransferAdjusment();
+        transferAdjusment.setHasDebt(debtAmount.compareTo(BigDecimal.ZERO) > 0);
+        transferAdjusment.setHasReceivable(false);
+        transferAdjusment.setDebtAmount(debtAmount);
+        transferAdjusment.setDebtTransactionType(TransactionTypeEnum.CREDIT);
+        transferAdjusment.setTargetAmount(transferAmount);
+        transferAdjusment.setTargetTransactionType(TransactionTypeEnum.CREDIT);
+        transferAdjusment.setSourceAmount(transferAmount);
+        transferAdjusment.setSourceTransactionType(TransactionTypeEnum.DEBET);
+        return transferAdjusment;
     }
-
-    private TransferAdjusment getTransferAdjusment(BigDecimal debtAmount, BigDecimal receivableAmount, BigDecimal transferAmount) {
-        TransferAdjusment response = new TransferAdjusment();
-        response.setHasDebt(false);
-        response.setHasReceivable(true);
-        response.setReceivableAmount(receivableAmount);
-        response.setReceiveTransactionType(TransactionTypeEnum.DEBET);
-        response.setDebtAmount(debtAmount);
-        response.setDebtTransactionType(TransactionTypeEnum.DEBET);
-        response.setSourceAmount(transferAmount);
-        response.setSourceTransactionType(TransactionTypeEnum.DEBET);
-        response.setTargetAmount(transferAmount);
-        response.setTargetTransactionType(TransactionTypeEnum.CREDIT);
-        return response;
-    }
-
 }
