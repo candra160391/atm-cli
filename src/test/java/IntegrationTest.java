@@ -275,7 +275,7 @@ public class IntegrationTest {
     //source account has receive and transfer amount > receive amount
     //residual value = transfer amount - receive amount
     //residual value < balance
-    //balance 410, receive amount = 50, transfer amount = 70 => transfer amount = 20,  balance = 410 - 20, will erase receive amount
+    //balance 410, transfer amount = 70, receive amount = 50,  residual value= 20, transfer amount = 20, balance = 390, will erase receive amount
     @Test
     @Order(20)
     void testScenario20() {
