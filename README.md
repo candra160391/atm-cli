@@ -35,6 +35,10 @@ mvn exec:java
 cd target
 java -jar atm-cli.jar
 ```
+### ▶️ Running the ATM Application from start script
+```bash
+./start.sh
+```
 
 ### 🧪 Running Unit Tests
 ```bash
