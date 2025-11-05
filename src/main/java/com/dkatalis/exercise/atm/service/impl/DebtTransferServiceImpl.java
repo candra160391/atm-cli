@@ -11,9 +11,10 @@ import com.dkatalis.exercise.atm.repository.AccountRepository;
 import com.dkatalis.exercise.atm.repository.UserRepository;
 import com.dkatalis.exercise.atm.service.AbstractTransferService;
 import com.dkatalis.exercise.atm.service.AccountService;
+
 import java.math.BigDecimal;
 
-public class NormalTransferServiceImpl extends AbstractTransferService {
+public class DebtTransferServiceImpl extends AbstractTransferService {
 
     private final AccountService accountService;
     private final AccountRepository accountRepository;
@@ -21,13 +22,12 @@ public class NormalTransferServiceImpl extends AbstractTransferService {
     private final AuthenticationProvider authenticationProvider;
     private final MessageProvider messageProvider;
 
-    public NormalTransferServiceImpl
+    public DebtTransferServiceImpl
     (
-        AccountService accountService,
-        AccountRepository accountRepository,
-        UserRepository userRepository,
-        AuthenticationProvider authenticationProvider,
-        MessageProvider messageProvider
+            AccountService accountService,
+            AccountRepository accountRepository,
+            UserRepository userRepository,
+            AuthenticationProvider authenticationProvider, MessageProvider messageProvider
     )
     {
         this.accountService = accountService;
@@ -35,6 +35,11 @@ public class NormalTransferServiceImpl extends AbstractTransferService {
         this.userRepository = userRepository;
         this.authenticationProvider = authenticationProvider;
         this.messageProvider = messageProvider;
+    }
+
+    @Override
+    public MessageProvider getMessageProvider() {
+        return messageProvider;
     }
 
     @Override
@@ -59,13 +64,8 @@ public class NormalTransferServiceImpl extends AbstractTransferService {
 
     @Override
     public void validateTransfer(Account sourceAccount, Account targetAccount) throws TransactionException {
-        BigDecimal sourceAccountBalance = sourceAccount.getBalance();
 
-        if(sourceAccountBalance.compareTo(BigDecimal.ZERO) == 0){
-            throw new TransactionException(messageProvider.get("error.not.enough.balance"));
-        }
-
-        if(sourceAccount.getDebtAccount() != null || sourceAccount.getReceivableAccount() != null){
+        if(sourceAccount.getDebtAccount() == null){
             throw new TransactionException(messageProvider.get("error.invalid.transfer.type"));
         }
 
@@ -75,29 +75,30 @@ public class NormalTransferServiceImpl extends AbstractTransferService {
     }
 
     @Override
-    public TransferAdjusment doBeforeTransfer(Account sourceAccount, Account targetAccount, BigDecimal transferAmount) throws TransactionException{
+    public TransferAdjusment doBeforeTransfer(Account sourceAccount, Account targetAccount, BigDecimal transferAmount) throws TransactionException {
 
         if(transferAmount.compareTo(BigDecimal.ZERO) <= 0){
             throw new TransactionException(messageProvider.get("error.invalid.transfer.amount"));
         }
 
-        BigDecimal debtAmount = BigDecimal.ZERO;
-        BigDecimal sourceAccountBalance = sourceAccount.getBalance();
+        BigDecimal debtAmount = sourceAccount.getDebtAccount().getBalance();
+        BigDecimal residualValue = BigDecimal.ZERO;
 
-        if(sourceAccountBalance.compareTo(transferAmount) <= 0){
-            debtAmount = transferAmount.subtract(sourceAccountBalance);
-            transferAmount = sourceAccountBalance;
+        if(transferAmount.compareTo(debtAmount) > 0){
+            residualValue = transferAmount.subtract(debtAmount);
+            transferAmount = debtAmount;
         }
 
         TransferAdjusment transferAdjusment = new TransferAdjusment();
-        transferAdjusment.setHasDebt(debtAmount.compareTo(BigDecimal.ZERO) > 0);
+        transferAdjusment.setHasDebt(true);
         transferAdjusment.setHasReceivable(false);
-        transferAdjusment.setDebtAmount(debtAmount);
-        transferAdjusment.setDebtTransactionType(TransactionTypeEnum.CREDIT);
+        transferAdjusment.setDebtAmount(transferAmount);
+        transferAdjusment.setDebtTransactionType(TransactionTypeEnum.DEBET);
         transferAdjusment.setTargetAmount(transferAmount);
         transferAdjusment.setTargetTransactionType(TransactionTypeEnum.CREDIT);
-        transferAdjusment.setSourceAmount(transferAmount);
-        transferAdjusment.setSourceTransactionType(TransactionTypeEnum.DEBET);
+        transferAdjusment.setSourceAmount(residualValue);
+        transferAdjusment.setSourceTransactionType(TransactionTypeEnum.CREDIT);
         return transferAdjusment;
     }
+
 }

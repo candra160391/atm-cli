@@ -14,7 +14,7 @@ import com.dkatalis.exercise.atm.service.AccountService;
 
 import java.math.BigDecimal;
 
-public class DebtTransferServiceImpl extends AbstractTransferService {
+public class ReceivableTransferServiceImpl extends AbstractTransferService {
 
     private final AccountService accountService;
     private final AccountRepository accountRepository;
@@ -22,12 +22,13 @@ public class DebtTransferServiceImpl extends AbstractTransferService {
     private final AuthenticationProvider authenticationProvider;
     private final MessageProvider messageProvider;
 
-    public DebtTransferServiceImpl
+    public ReceivableTransferServiceImpl
     (
-            AccountService accountService,
-            AccountRepository accountRepository,
-            UserRepository userRepository,
-            AuthenticationProvider authenticationProvider, MessageProvider messageProvider
+        AccountService accountService,
+        AccountRepository accountRepository,
+        UserRepository userRepository,
+        AuthenticationProvider authenticationProvider,
+        MessageProvider messageProvider
     )
     {
         this.accountService = accountService;
@@ -35,6 +36,11 @@ public class DebtTransferServiceImpl extends AbstractTransferService {
         this.userRepository = userRepository;
         this.authenticationProvider = authenticationProvider;
         this.messageProvider = messageProvider;
+    }
+
+    @Override
+    public MessageProvider getMessageProvider() {
+        return messageProvider;
     }
 
     @Override
@@ -60,7 +66,8 @@ public class DebtTransferServiceImpl extends AbstractTransferService {
     @Override
     public void validateTransfer(Account sourceAccount, Account targetAccount) throws TransactionException {
 
-        if(sourceAccount.getDebtAccount() == null){
+        if(sourceAccount.getReceivableAccount() == null){
+
             throw new TransactionException(messageProvider.get("error.invalid.transfer.type"));
         }
 
@@ -76,24 +83,44 @@ public class DebtTransferServiceImpl extends AbstractTransferService {
             throw new TransactionException(messageProvider.get("error.invalid.transfer.amount"));
         }
 
-        BigDecimal debtAmount = sourceAccount.getDebtAccount().getBalance();
+        BigDecimal receiveableAmount = sourceAccount.getReceivableAccount().getBalance();
         BigDecimal residualValue = BigDecimal.ZERO;
+        BigDecimal sourceAccountBalance = sourceAccount.getBalance();
 
-        if(transferAmount.compareTo(debtAmount) > 0){
-            residualValue = transferAmount.subtract(debtAmount);
-            transferAmount = debtAmount;
+        // scenario
+        // transfer < debt
+        // transfer == deb
+        // transfer > deb, debt is paid, residual = transfer - deb, then residual < balance , transfer amount = residual
+        // transfer > deb , debt is paid, residual = transfer - deb, then residual > balance, transfer amount = balance, debt = balance - residual
+
+        if(transferAmount.compareTo(receiveableAmount) <= 0){
+            return getTransferAdjusment(BigDecimal.ZERO, transferAmount, BigDecimal.ZERO);
         }
 
-        TransferAdjusment transferAdjusment = new TransferAdjusment();
-        transferAdjusment.setHasDebt(true);
-        transferAdjusment.setHasReceivable(false);
-        transferAdjusment.setDebtAmount(transferAmount);
-        transferAdjusment.setDebtTransactionType(TransactionTypeEnum.DEBET);
-        transferAdjusment.setTargetAmount(transferAmount);
-        transferAdjusment.setTargetTransactionType(TransactionTypeEnum.CREDIT);
-        transferAdjusment.setSourceAmount(residualValue);
-        transferAdjusment.setSourceTransactionType(TransactionTypeEnum.CREDIT);
-        return transferAdjusment;
+        residualValue = transferAmount.subtract(receiveableAmount);
+
+        if(residualValue.compareTo(sourceAccountBalance) < 0){
+            return getTransferAdjusment(BigDecimal.ZERO, receiveableAmount, residualValue);
+        }
+        else {
+            BigDecimal debtAmount = transferAmount.subtract(sourceAccountBalance).subtract(receiveableAmount);
+            return getTransferAdjusment(debtAmount, receiveableAmount, sourceAccountBalance);
+        }
+    }
+
+    private TransferAdjusment getTransferAdjusment(BigDecimal debtAmount, BigDecimal receivableAmount, BigDecimal transferAmount) {
+        TransferAdjusment response = new TransferAdjusment();
+        response.setHasDebt(false);
+        response.setHasReceivable(true);
+        response.setReceivableAmount(receivableAmount);
+        response.setReceiveTransactionType(TransactionTypeEnum.DEBET);
+        response.setDebtAmount(debtAmount);
+        response.setDebtTransactionType(TransactionTypeEnum.DEBET);
+        response.setSourceAmount(transferAmount);
+        response.setSourceTransactionType(TransactionTypeEnum.DEBET);
+        response.setTargetAmount(transferAmount);
+        response.setTargetTransactionType(TransactionTypeEnum.CREDIT);
+        return response;
     }
 
 }
