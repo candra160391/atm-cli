@@ -331,7 +331,6 @@ public class IntegrationTest {
         assertEquals(expected, result);
 
         runCommand("logout");
-        runCommand("exit");
     }
 
 }
