@@ -199,4 +199,139 @@ public class IntegrationTest {
         String result = runCommand("deposit 100");
         assertEquals(expected, result);
     }
+
+    @Test
+    @Order(15)
+    void testScenario15() {
+        String expected = buildExpectedResult(
+                messageProvider.get("transfer.success", 90, "Alice"),
+                messageProvider.get("display.balance", 0),
+                messageProvider.get("display.debt", 60, "Alice")
+                );
+
+        String result = runCommand("transfer Alice 150");
+        assertEquals(expected, result);
+    }
+
+    @Test
+    @Order(16)
+    void testScenario16() {
+        String expected = buildExpectedResult(messageProvider.get("auth.logout.success", "Bob"));
+        String result = runCommand("logout");
+        assertEquals(expected, result);
+    }
+
+    @Test
+    @Order(17)
+    void testScenario17() {
+        String expected = buildExpectedResult(
+                messageProvider.get("auth.login.success", "Alice"),
+                messageProvider.get("display.balance", 310),
+                messageProvider.get("display.receive", 60, "Bob")
+                );
+
+        String result = runCommand("login Alice");
+        assertEquals(expected, result);
+    }
+
+    //edge case for transfer
+    //source account has receive and transfer amount < receive amount
+    //receive amount = 60, transfer amount = 20 , then receive amount = 40, remaining balance still same
+    @Test
+    @Order(18)
+    void testScenario18() {
+        String expected = buildExpectedResult(
+                messageProvider.get("display.balance", 310),
+                messageProvider.get("display.receive", 40, "Bob")
+                );
+
+        String result = runCommand("transfer Bob 20");
+        assertEquals(expected, result);
+    }
+
+    //edge case for transfer
+    //source account has receive and transfer amount = receive amount
+    //receive amount = 40, transfer amount = 40 , then receive amount = 0 will erase receivable amount, remaining balance still same
+    @Test
+    @Order(19)
+    void testScenario19() {
+        String expected = buildExpectedResult(
+                messageProvider.get("display.balance", 310)
+                );
+
+        String result = runCommand("transfer Bob 40");
+        assertEquals(expected, result);
+
+        runCommand("logout");
+        runCommand("login Bob");
+        runCommand("balance");
+        runCommand("deposit 100");
+        runCommand("transfer Alice 150");
+        runCommand("logout");
+        runCommand("login Alice");
+    }
+
+    //edge case for transfer
+    //source account has receive and transfer amount > receive amount
+    //residual value = transfer amount - receive amount
+    //residual value < balance
+    //balance 410, receive amount = 50, transfer amount = 70 => transfer amount = 20,  balance = 410 - 20, will erase receive amount
+    @Test
+    @Order(20)
+    void testScenario20() {
+        String expected = buildExpectedResult(
+                messageProvider.get("transfer.success", 20, "Bob"),
+                messageProvider.get("display.balance", 390)
+                );
+
+        String result = runCommand("transfer Bob 70");
+        assertEquals(expected, result);
+
+        runCommand("logout");
+        runCommand("login Bob");
+        runCommand("deposit 100");
+        runCommand("transfer Alice 150");
+        runCommand("logout");
+        runCommand("login Alice");
+    }
+
+    //edge case for transfer
+    //source account has receive and transfer amount > receive amount
+    //residual value = transfer amount - receive amount
+    //residual value > balance
+    //balance 510, transfer amount = 550, receive amount = 30, residual = 520,  transfer amount = 510 , new debt = 10
+    @Test
+    @Order(21)
+    void testScenario21() {
+        String expected = buildExpectedResult(
+                messageProvider.get("transfer.success", 510, "Bob"),
+                messageProvider.get("display.balance", 0),
+                messageProvider.get("display.debt", 10, "Bob")
+                );
+
+        String result = runCommand("transfer Bob 550");
+        assertEquals(expected, result);
+
+        expected = buildExpectedResult(
+                messageProvider.get("display.balance", 0),
+                messageProvider.get("display.debt", 10, "Bob")
+        );
+
+        result = runCommand("balance");
+        assertEquals(expected, result);
+
+        runCommand("logout");
+        runCommand("login Bob");
+
+        expected = buildExpectedResult(
+                messageProvider.get("display.balance", 510),
+                messageProvider.get("display.receive", 10, "Alice")
+        );
+        result = runCommand("balance");
+        assertEquals(expected, result);
+
+        runCommand("logout");
+        runCommand("exit");
+    }
+
 }
